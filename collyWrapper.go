@@ -22,6 +22,7 @@ var White = "\033[97m"
 
 type CollyWrapper struct {
 	initNode *LinkNode
+	currNode *LinkNode
 
 	nodes     []*LinkNode        //history of all nodes which have been visited --> THESE URL'S MAY HAVE THE SPECIAL TAG
 	linkQueue []*LinkNode        //list of nodes which need to be explored --> THESE URL'S MAY HAVE THE SPECIAL TAG
@@ -56,23 +57,18 @@ func (cw *CollyWrapper) Dequeue() bool {
 	if len(cw.linkQueue) == 0 {
 		return false
 	}
+	cw.currNode = cw.linkQueue[0]
 	cw.linkQueue = cw.linkQueue[1:]
 	return true
 }
 
 func (cw *CollyWrapper) setInitNode(node *LinkNode) {
 	cw.initNode = node
-}
-
-func (cw *CollyWrapper) CurrNode() *LinkNode {
-	if len(cw.linkQueue) == 0 {
-		return cw.initNode
-	}
-	return cw.linkQueue[0]
+	cw.currNode = node
 }
 
 func (cw *CollyWrapper) findConnection(other *CollyWrapper) []*LinkNode {
-	if cw.CurrNode() == nil || other.CurrNode() == nil {
+	if cw.currNode == nil || other.currNode == nil {
 		return nil
 	}
 

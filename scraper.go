@@ -63,6 +63,7 @@ func OnRequestFunc(r *colly.Request) {
 func OnErrorFunc(r *colly.Response, err error) {
 	fmt.Println("Uh oh... ", err)
 	fmt.Println("Response Status Code: ", r.StatusCode)
+	fmt.Println("Failure with", r.Request.URL)
 	fmt.Println()
 }
 
@@ -97,18 +98,18 @@ func OnScrapedFunc(r *colly.Response) {
 		//TODO: make significantly less ugly
 		if rand.IntN(2) == 0 {
 			if !doneScanning && cw1.Dequeue() {
-				cw1.collector.Visit(completeLink(cw1.CurrNode().url))
+				cw1.collector.Visit(completeLink(cw1.currNode.url))
 			}
 			if !doneScanning && cw2.Dequeue() {
 				enableC2Enqueue = true
-				cw2.collector.Visit(completeLink(cw2.CurrNode().url))
+				cw2.collector.Visit(completeLink(cw2.currNode.url))
 			}
 		} else {
 			if !doneScanning && cw2.Dequeue() {
 				enableC2Enqueue = true
-				cw2.collector.Visit(completeLink(cw2.CurrNode().url))
+				cw2.collector.Visit(completeLink(cw2.currNode.url))
 				if !doneScanning && cw1.Dequeue() {
-					cw1.collector.Visit(completeLink(cw1.CurrNode().url))
+					cw1.collector.Visit(completeLink(cw1.currNode.url))
 				}
 			}
 		}
@@ -175,7 +176,7 @@ func main() {
 		if !IsUrlAllowed(url) {
 			return
 		}
-		newLink := newNode(cw1.CurrNode(), url, cw1.CurrNode().distance+1)
+		newLink := newNode(cw1.currNode, url, cw1.currNode.distance+1)
 		cw1.Enqueue(newLink)
 	})
 
@@ -188,18 +189,19 @@ func main() {
 		if !IsUrlAllowed(url) {
 			return
 		}
-		if url == unspecialify(cw2.CurrNode().url) {
+		if url == unspecialify(cw2.initNode.url) ||
+			url == specialify(cw2.currNode.url) {
 			return
 		}
-		newLink := newNode(cw2.CurrNode(), specialify(url), cw2.CurrNode().distance+1)
+		newLink := newNode(cw2.currNode, specialify(url), cw2.currNode.distance+1)
 		if cw2.Enqueue(newLink) {
 			// fmt.Println("Enqueuing", url)
 		}
 	})
 
-	collector1.Visit("https://en.wikipedia.org/wiki/Special:Random")
-	collector2.Visit("https://en.wikipedia.org/wiki/Special:Random")
+	// collector1.Visit("https://en.wikipedia.org/wiki/Special:Random")
+	// collector2.Visit("https://en.wikipedia.org/wiki/Special:Random")
 
-	// collector.Visit("https://en.wikipedia.org/wiki/List_of_cities_in_Minnesota")
-	// collector2.Visit("https://en.wikipedia.org/wiki/Minneapolis")
+	collector1.Visit("https://en.wikipedia.org/wiki/Sodesaki_Station")
+	collector2.Visit("https://en.wikipedia.org/wiki/47th_parallel_south")
 }
