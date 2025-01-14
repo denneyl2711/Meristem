@@ -75,15 +75,8 @@ func OnScrapedFunc(r *colly.Response) {
 	if doneScanning {
 		return
 	}
-	fmt.Println("Done scraping", r.Request.URL)
+
 	if path := cw1.findConnection(cw2); path != nil {
-		// fmt.Println("Collector 1 links: ", completeLink(cw1.initNode.url))
-		// cw1.printLinks()
-		// fmt.Println("---------------------------------------------")
-
-		// fmt.Println("Collector 2 links: ", completeLink(cw2.initNode.url))
-		// cw2.printLinks()
-
 		fmt.Println()
 		fmt.Println("Start:", completeLink(cw1.initNode.url))
 		fmt.Println("Target:", unspecialify(completeLink(cw2.initNode.url)))
@@ -199,9 +192,9 @@ func main() {
 		}
 	})
 
-	// collector1.Visit("https://en.wikipedia.org/wiki/Special:Random")
-	// collector2.Visit("https://en.wikipedia.org/wiki/Special:Random")
+	collector1.Visit("https://en.wikipedia.org/wiki/Special:Random")
+	collector2.Visit("https://en.wikipedia.org/wiki/Special:Random")
 
-	collector1.Visit("https://en.wikipedia.org/wiki/Sodesaki_Station")
-	collector2.Visit("https://en.wikipedia.org/wiki/47th_parallel_south")
+	// collector1.Visit("https://en.wikipedia.org/wiki/Sodesaki_Station")
+	// collector2.Visit("https://en.wikipedia.org/wiki/47th_parallel_south")
 }

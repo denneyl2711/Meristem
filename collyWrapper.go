@@ -86,71 +86,36 @@ func (cw *CollyWrapper) findConnection(other *CollyWrapper) []*LinkNode {
 		return returned
 	}
 
-	fmt.Println("Intersection", intersection)
-
 	//find each wrapper's path to the thing in the set
 	var middle_url string = intersection.ToSlice()[0]
 
 	//calculate cw path
 	fmt.Println()
 	path := make([]*LinkNode, 0)
-	firstPath := true
 	for _, link := range cw.nodes {
 		if link.url == middle_url {
 			tempNode := link
-			var color string
-			if firstPath {
-				color = Red
-			} else {
-				color = Blue
-				fmt.Println("------------------")
-			}
-			if tempNode.prevNode == nil {
-				fmt.Println("nil prevNode")
-			}
 			for tempNode.prevNode != nil {
-				prevUrl := strings.TrimPrefix(tempNode.url, "/wiki/")
 				tempNode = tempNode.prevNode
 				path = append(path, tempNode)
-				fmt.Println(color, strings.TrimPrefix(tempNode.url, "/wiki/"), "--->", prevUrl, Reset)
 			}
-			firstPath = false
 		}
 	}
 
-	// fmt.Println("cw's init node is ", cw.initNode.url)
-
 	//calculate other path
-	firstPath = true
 	for _, linkNode := range other.nodes {
 		//other has the /Special:WhatLinksHere/ links, so we need to convert those
 		unspecialifiedLink := unspecialify(linkNode.url)
 		if unspecialifiedLink == middle_url {
 			tempNode := linkNode
 			path = append([]*LinkNode{tempNode}, path...)
-			var color string
-			if firstPath {
-				color = Green
-			} else {
-				color = Magenta
-				fmt.Println("------------------")
-			}
-			if tempNode.prevNode == nil {
-				fmt.Println("nil prevNode")
-			}
 			for tempNode.prevNode != nil {
-				nextUrl := strings.TrimPrefix(unspecialify(tempNode.url), "/wiki/")
 				tempNode = tempNode.prevNode //"prevNode" is really the next node
-
 				//add to the front of the list to maintain proper order
 				path = append([]*LinkNode{tempNode}, path...)
-				fmt.Println(color, strings.TrimPrefix(nextUrl, "/wiki/"), "--->", strings.TrimPrefix(unspecialify(tempNode.url), "/wiki/"), Reset)
 			}
-			firstPath = false
 		}
 	}
-
-	// fmt.Println("other's init node is ", other.initNode.url)
 
 	return path
 }
