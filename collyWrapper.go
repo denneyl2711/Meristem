@@ -28,6 +28,8 @@ type CollyWrapper struct {
 	linkQueue []*LinkNode        //list of nodes which need to be explored --> THESE URL'S MAY HAVE THE SPECIAL TAG
 	urlSet    mapset.Set[string] //unique list of urls that have been visited --> THESE URL'S DO NOT HAVE THE SPECIAL TAG
 
+	setSize int //have to do this manually for some reason
+
 	collector *colly.Collector
 }
 
@@ -35,6 +37,7 @@ func newCollyWrapper(collector *colly.Collector) *CollyWrapper {
 	newCollector := new(CollyWrapper)
 	newCollector.collector = collector
 	newCollector.urlSet = mapset.NewSet[string]()
+	newCollector.setSize = 0
 
 	return newCollector
 }
@@ -48,6 +51,7 @@ func (cw *CollyWrapper) Enqueue(node *LinkNode) bool {
 	if cw.urlSet.Add(unspecialedLink) {
 		cw.nodes = append(cw.nodes, node)
 		cw.linkQueue = append(cw.linkQueue, node)
+		cw.setSize++
 		return true
 	}
 	return false
@@ -120,10 +124,6 @@ func (cw *CollyWrapper) findConnection(other *CollyWrapper) []*LinkNode {
 	return path
 }
 
-func (cw *CollyWrapper) printLinks() {
-	for _, link := range cw.nodes {
-		// fmt.Println(link.url, "\t\t", link.distance)
-		//TODO: better formatting for printing
-		fmt.Println(link.url)
-	}
+func (cw *CollyWrapper) size() int {
+	return cw.setSize
 }

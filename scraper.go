@@ -2,12 +2,15 @@ package main
 
 import (
 	"fmt"
-	"math/rand/v2"
+	"io"
 	"regexp"
 	"strings"
 
 	//Colly web scraping stuff
 	"github.com/gocolly/colly"
+
+	//for writing to console and updating written lines
+	"github.com/gosuri/uilive"
 )
 
 var cw1 *CollyWrapper
@@ -68,7 +71,13 @@ func OnErrorFunc(r *colly.Response, err error) {
 }
 
 var doneScanning bool = false
+
+// need to have this variable to ensure that c2 only scans backwards (what links here)
+// without this flag, c2 would scrape forwards for the first iteration
 var enableC2Enqueue bool = false //TODO: do this cleaner
+
+var writer *uilive.Writer
+var writer2 io.Writer
 
 // called once scraping is done
 func OnScrapedFunc(r *colly.Response) {
@@ -76,20 +85,35 @@ func OnScrapedFunc(r *colly.Response) {
 		return
 	}
 
+	startUrl := "Unknown"
+	endUrl := "Unknown"
+
+	if cw1.initNode != nil {
+		startUrl = cw1.initNode.url
+	}
+
+	if cw2.initNode != nil {
+		endUrl = cw2.initNode.url
+	}
+
+	fmt.Fprintln(writer)
+	fmt.Fprintln(writer, "Start:", completeLink(startUrl))
+	fmt.Fprintln(writer, "Target:", unspecialify(completeLink(endUrl)))
+	fmt.Fprintln(writer)
+
+	fmt.Fprintln(writer, "Collector 1 has seen", cw1.size(), "links")
+	fmt.Fprintln(writer2, "Collector 2 has seen", cw2.size(), "links")
+
 	if path := cw1.findConnection(cw2); path != nil {
-		fmt.Println()
-		fmt.Println("Start:", completeLink(cw1.initNode.url))
-		fmt.Println("Target:", unspecialify(completeLink(cw2.initNode.url)))
-		fmt.Println()
+		fmt.Fprintln(writer)
 		for i := len(path) - 1; i >= 0; i-- {
-			fmt.Println(unspecialify(completeLink(path[i].url)))
+			fmt.Fprintln(writer, unspecialify(completeLink(path[i].url)))
 		}
 		doneScanning = true
 	} else {
 		//continue recursing, if possible
-		//randomly decide which collector will continue collecting first
 		//TODO: make significantly less ugly
-		if rand.IntN(2) == 0 {
+		if cw1.size() < cw2.size() {
 			if !doneScanning && cw1.Dequeue() {
 				cw1.collector.Visit(completeLink(cw1.currNode.url))
 			}
@@ -101,6 +125,8 @@ func OnScrapedFunc(r *colly.Response) {
 			if !doneScanning && cw2.Dequeue() {
 				enableC2Enqueue = true
 				cw2.collector.Visit(completeLink(cw2.currNode.url))
+
+				//nested to ensure that cw2 only continues scraping once cw1 has data
 				if !doneScanning && cw1.Dequeue() {
 					cw1.collector.Visit(completeLink(cw1.currNode.url))
 				}
@@ -110,6 +136,10 @@ func OnScrapedFunc(r *colly.Response) {
 }
 
 func main() {
+	writer = uilive.New()
+	writer2 = writer.Newline()
+	writer.Start()
+
 	const recursionLimit int = 5
 
 	var collector1 *colly.Collector = colly.NewCollector(
@@ -197,4 +227,6 @@ func main() {
 
 	// collector1.Visit("https://en.wikipedia.org/wiki/Sodesaki_Station")
 	// collector2.Visit("https://en.wikipedia.org/wiki/47th_parallel_south")
+
+	writer.Stop()
 }
